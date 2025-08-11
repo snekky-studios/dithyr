@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dgk3fxe85f6bi"
-path="res://.godot/imported/desert2_berry_nebula.png-9f2e365cfca9b9c713d48337ce6ea1a6.ctex"
+uid="uid://u1oqtdh80xjc"
+path="res://.godot/imported/jack.png-1f06c35d83334fbf6a08fad5a645a7bc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/output/desert2_berry_nebula.png"
-dest_files=["res://.godot/imported/desert2_berry_nebula.png-9f2e365cfca9b9c713d48337ce6ea1a6.ctex"]
+source_file="res://assets/input/jack.png"
+dest_files=["res://.godot/imported/jack.png-1f06c35d83334fbf6a08fad5a645a7bc.ctex"]
 
 [params]
 

@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3 uid="uid://clslvcoy7v7pi"]
+
+[ext_resource type="Script" uid="uid://cljus3pv0hsuh" path="res://scenes/ui/color_selector/color_selector.gd" id="1_gkabu"]
+[ext_resource type="Theme" uid="uid://bsunhvxrt1csx" path="res://resources/themes/theme.tres" id="1_yi01m"]
+
+[node name="ColorSelector" type="HBoxContainer"]
+custom_minimum_size = Vector2(88, 22)
+offset_right = 88.0
+offset_bottom = 22.0
+theme = ExtResource("1_yi01m")
+alignment = 1
+script = ExtResource("1_gkabu")
+
+[node name="ColorRectLeft" type="ColorRect" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+mouse_filter = 2
+theme = ExtResource("1_yi01m")
+color = Color(0, 0, 0, 1)
+
+[node name="LineEdit" type="LineEdit" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_yi01m")
+placeholder_text = "#000000"
+max_length = 7
+
+[node name="ColorRectRight" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+mouse_filter = 2
+theme = ExtResource("1_yi01m")
+color = Color(0, 0, 0, 1)
