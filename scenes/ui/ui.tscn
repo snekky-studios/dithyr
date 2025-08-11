@@ -1,0 +1,156 @@
+[gd_scene load_steps=7 format=3 uid="uid://y3jvrg77638i"]
+
+[ext_resource type="Script" uid="uid://dnlbkpftm8t4t" path="res://scenes/ui/ui.gd" id="1_u7n8c"]
+[ext_resource type="Theme" uid="uid://bsunhvxrt1csx" path="res://resources/themes/theme.tres" id="2_0dwhk"]
+[ext_resource type="FontFile" uid="uid://dq46rytesrvu1" path="res://assets/fonts/m6x11.ttf" id="2_f5cxw"]
+[ext_resource type="LabelSettings" uid="uid://ds0g0o0u71utq" path="res://resources/themes/label.tres" id="3_g5kmx"]
+[ext_resource type="Texture2D" uid="uid://dgk3fxe85f6bi" path="res://assets/output/desert2_berry_nebula.png" id="4_0dwhk"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g5kmx"]
+
+[node name="UI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 0
+script = ExtResource("1_u7n8c")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainerColors" type="VBoxContainer" parent="HBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainerColors"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainerGrayscale" type="VBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainerGrayscaleButtons" type="HBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerGrayscale"]
+layout_mode = 2
+
+[node name="ButtonAddGrayscaleColor" type="Button" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerGrayscale/HBoxContainerGrayscaleButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme = ExtResource("2_0dwhk")
+theme_override_fonts/font = ExtResource("2_f5cxw")
+text = "+"
+
+[node name="ButtonSubtractGrayscaleColor" type="Button" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerGrayscale/HBoxContainerGrayscaleButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_0dwhk")
+theme_override_fonts/font = ExtResource("2_f5cxw")
+text = "-"
+
+[node name="ColorPicker" type="LineEdit" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerGrayscale"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+text = "#000000"
+
+[node name="VBoxContainerPalette" type="VBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainerPaletteButtons" type="HBoxContainer" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerPalette"]
+layout_mode = 2
+
+[node name="ButtonAddPaletteColor" type="Button" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerPalette/HBoxContainerPaletteButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_0dwhk")
+theme_override_fonts/font = ExtResource("2_f5cxw")
+text = "+"
+
+[node name="ButtonSubtractPaletteColor" type="Button" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerPalette/HBoxContainerPaletteButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("2_0dwhk")
+theme_override_fonts/font = ExtResource("2_f5cxw")
+text = "-"
+
+[node name="ColorPickerButton2" type="LineEdit" parent="HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainer/VBoxContainerPalette"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+text = "#000000"
+
+[node name="VBoxContainerFileImage" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/VBoxContainerFileImage"]
+layout_mode = 2
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainerFile" type="VBoxContainer" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainerOpen" type="HBoxContainer" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile"]
+layout_mode = 2
+
+[node name="ButtonOpen" type="Button" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerOpen"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+theme_override_fonts/font = ExtResource("2_f5cxw")
+theme_override_font_sizes/font_size = 16
+text = "OPEN"
+
+[node name="LabelOpen" type="Label" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerOpen"]
+layout_mode = 2
+text = "res://assets/input/desert2.png"
+label_settings = ExtResource("3_g5kmx")
+
+[node name="VBoxContainerSave" type="HBoxContainer" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile"]
+layout_mode = 2
+
+[node name="ButtonSave" type="Button" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerSave"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+theme_override_fonts/font = ExtResource("2_f5cxw")
+theme_override_font_sizes/font_size = 16
+text = "SAVE"
+
+[node name="LabelSave" type="Label" parent="HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerSave"]
+layout_mode = 2
+text = "res://assets/input/desert2.png"
+label_settings = ExtResource("3_g5kmx")
+
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer/VBoxContainerFileImage"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_g5kmx")
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/VBoxContainerFileImage/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="TextureRectImage" type="TextureRect" parent="HBoxContainer/VBoxContainerFileImage/PanelContainer/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+texture = ExtResource("4_0dwhk")
+expand_mode = 1
+stretch_mode = 5
