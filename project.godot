@@ -27,6 +27,10 @@ window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 
+[gui]
+
+theme/custom="uid://bsunhvxrt1csx"
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

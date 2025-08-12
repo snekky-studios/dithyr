@@ -4,9 +4,20 @@
 [ext_resource type="Theme" uid="uid://bsunhvxrt1csx" path="res://resources/themes/theme.tres" id="2_0dwhk"]
 [ext_resource type="FontFile" uid="uid://dq46rytesrvu1" path="res://assets/fonts/m6x11.ttf" id="2_f5cxw"]
 [ext_resource type="LabelSettings" uid="uid://ds0g0o0u71utq" path="res://resources/themes/label.tres" id="3_g5kmx"]
-[ext_resource type="Texture2D" uid="uid://dgk3fxe85f6bi" path="res://assets/output/desert2_berry_nebula.png" id="4_0dwhk"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g5kmx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0dwhk"]
+bg_color = Color(0, 0, 0, 0.501961)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 1, 1, 0.501961)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
 
 [node name="UI" type="Control"]
 layout_mode = 3
@@ -18,7 +29,7 @@ grow_vertical = 2
 size_flags_horizontal = 0
 script = ExtResource("1_u7n8c")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainerMain" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,78 +41,78 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainerMain"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerMain/HBoxContainer"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainerColors" type="VBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer"]
+[node name="VBoxContainerColors" type="VBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer"]
 layout_mode = 2
 
-[node name="LabelColorPaletteMapper" type="Label" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors"]
+[node name="LabelColorPaletteMapper" type="Label" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors"]
 layout_mode = 2
 theme = ExtResource("2_0dwhk")
 text = "Color Palette Mapper"
 horizontal_alignment = 1
 
-[node name="HBoxContainerHeader" type="HBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors"]
+[node name="HBoxContainerHeader" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors"]
 layout_mode = 2
 alignment = 1
 
-[node name="LabelPalette" type="Label" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerHeader"]
+[node name="LabelNewPalette" type="Label" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerHeader"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_0dwhk")
-text = "Palette"
+text = "New Palette"
 horizontal_alignment = 1
 
-[node name="LabelGrayscale" type="Label" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerHeader"]
+[node name="LabelCurrentPalette" type="Label" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerHeader"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_0dwhk")
-text = "Grayscale"
+text = "Current Palette"
 horizontal_alignment = 1
 
-[node name="HBoxContainerContent" type="HBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors"]
+[node name="HBoxContainerContent" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VBoxContainerPalette" type="VBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent"]
+[node name="VBoxContainerNewPalette" type="VBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="HBoxContainerPaletteButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerPalette"]
+[node name="HBoxContainerNewPaletteButtons" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerNewPalette"]
 custom_minimum_size = Vector2(88, 22)
 layout_mode = 2
 
-[node name="ButtonAddPaletteColor" type="Button" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerPalette/HBoxContainerPaletteButtons"]
+[node name="ButtonAddNewPaletteColor" type="Button" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerNewPalette/HBoxContainerNewPaletteButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_0dwhk")
 theme_override_fonts/font = ExtResource("2_f5cxw")
 text = "+"
 
-[node name="ButtonRemovePaletteColor" type="Button" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerPalette/HBoxContainerPaletteButtons"]
+[node name="ButtonRemoveNewPaletteColor" type="Button" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerNewPalette/HBoxContainerNewPaletteButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_0dwhk")
 theme_override_fonts/font = ExtResource("2_f5cxw")
 text = "-"
 
-[node name="VBoxContainerGrayscale" type="VBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent"]
+[node name="VBoxContainerCurrentPalette" type="VBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="HBoxContainerGrayscaleButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerGrayscale"]
+[node name="HBoxContainerCurrentPaletteButtons" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerCurrentPalette"]
 custom_minimum_size = Vector2(88, 22)
 layout_mode = 2
 
-[node name="ButtonAddGrayscaleColor" type="Button" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerGrayscale/HBoxContainerGrayscaleButtons"]
+[node name="ButtonAddCurrentPaletteColor" type="Button" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerCurrentPalette/HBoxContainerCurrentPaletteButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 0
@@ -109,30 +120,27 @@ theme = ExtResource("2_0dwhk")
 theme_override_fonts/font = ExtResource("2_f5cxw")
 text = "+"
 
-[node name="ButtonRemoveGrayscaleColor" type="Button" parent="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerGrayscale/HBoxContainerGrayscaleButtons"]
+[node name="ButtonRemoveCurrentPaletteColor" type="Button" parent="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerCurrentPalette/HBoxContainerCurrentPaletteButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("2_0dwhk")
 theme_override_fonts/font = ExtResource("2_f5cxw")
 text = "-"
 
-[node name="VBoxContainerFileImage" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+[node name="VBoxContainerFileImage" type="VBoxContainer" parent="MarginContainerMain/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage"]
 layout_mode = 2
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="HBoxContainerFile" type="VBoxContainer" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer"]
+[node name="HBoxContainerButtons" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer"]
 layout_mode = 2
 
-[node name="VBoxContainerOpen" type="HBoxContainer" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile"]
-layout_mode = 2
-
-[node name="ButtonOpen" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerOpen"]
+[node name="ButtonOpen" type="Button" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons"]
 unique_name_in_owner = true
 layout_mode = 2
 theme = ExtResource("2_0dwhk")
@@ -140,16 +148,20 @@ theme_override_fonts/font = ExtResource("2_f5cxw")
 theme_override_font_sizes/font_size = 16
 text = "OPEN"
 
-[node name="LabelFileOpen" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerOpen"]
+[node name="ButtonOptions" type="Button" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "res://assets/input/desert2.png"
-label_settings = ExtResource("3_g5kmx")
+text = "OPTIONS"
 
-[node name="VBoxContainerSave" type="HBoxContainer" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile"]
+[node name="ButtonProcess" type="Button" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 22)
 layout_mode = 2
+size_flags_horizontal = 0
+theme = ExtResource("2_0dwhk")
+text = "PROCESS"
 
-[node name="ButtonSave" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerSave"]
+[node name="ButtonSave" type="Button" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons"]
 unique_name_in_owner = true
 layout_mode = 2
 theme = ExtResource("2_0dwhk")
@@ -157,31 +169,148 @@ theme_override_fonts/font = ExtResource("2_f5cxw")
 theme_override_font_sizes/font_size = 16
 text = "SAVE"
 
-[node name="LabelFileSave" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerSave"]
+[node name="HBoxContainerOpen" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons"]
+visible = false
+layout_mode = 2
+
+[node name="LabelFileOpen" type="Label" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons/HBoxContainerOpen"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "res://assets/input/desert2.png"
+label_settings = ExtResource("3_g5kmx")
+
+[node name="HBoxContainerSave" type="HBoxContainer" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons"]
+visible = false
+layout_mode = 2
+
+[node name="LabelFileSave" type="Label" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons/HBoxContainerSave"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "res://assets/input/desert2.png"
 label_settings = ExtResource("3_g5kmx")
 
-[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage"]
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_g5kmx")
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/PanelContainer"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="TextureRectImage" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainerFileImage/PanelContainer/MarginContainer"]
+[node name="TextureRectImage" type="TextureRect" parent="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/PanelContainer/MarginContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-texture = ExtResource("4_0dwhk")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="PanelContainerOptions" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -136.5
+offset_top = -74.0
+offset_right = 136.5
+offset_bottom = 74.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_0dwhk")
+theme_override_styles/panel = SubResource("StyleBoxFlat_0dwhk")
+
+[node name="MarginContainerOptions" type="MarginContainer" parent="PanelContainerOptions"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+
+[node name="VBoxContainerOptions" type="VBoxContainer" parent="PanelContainerOptions/MarginContainerOptions"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+
+[node name="LabelOptions" type="Label" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+text = "Options"
+horizontal_alignment = 1
+
+[node name="HBoxContainerGrayscale" type="HBoxContainer" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+
+[node name="LabelGrayscale" type="Label" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerGrayscale"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+text = "Grayscale Method"
+
+[node name="OptionButtonGrayscale" type="OptionButton" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerGrayscale"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+theme = ExtResource("2_0dwhk")
+item_count = 3
+popup/item_0/text = "BT.709"
+popup/item_0/id = 0
+popup/item_1/text = "BT.601"
+popup/item_1/id = 1
+popup/item_2/text = "Photoshop"
+popup/item_2/id = 2
+
+[node name="HBoxContainerDitheringTechnique" type="HBoxContainer" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+
+[node name="LabelDitheringTechnique" type="Label" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerDitheringTechnique"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+text = "Dithering Technique"
+
+[node name="OptionButtonDitheringTechnique" type="OptionButton" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerDitheringTechnique"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+theme = ExtResource("2_0dwhk")
+item_count = 2
+popup/item_0/text = "Intermediate"
+popup/item_0/id = 0
+popup/item_1/text = "Continuous"
+popup/item_1/id = 1
+
+[node name="HBoxContainerDitheringAlgorithm" type="HBoxContainer" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+
+[node name="LabelDitheringAlgorithm" type="Label" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerDitheringAlgorithm"]
+layout_mode = 2
+theme = ExtResource("2_0dwhk")
+text = "Dithering Algorithm"
+
+[node name="OptionButtonDitheringAlgorithm" type="OptionButton" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerDitheringAlgorithm"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 10
+theme = ExtResource("2_0dwhk")
+item_count = 3
+popup/item_0/text = "Standard"
+popup/item_0/id = 0
+popup/item_1/text = "Linear"
+popup/item_1/id = 1
+popup/item_2/text = "Stucki"
+popup/item_2/id = 2
+
+[node name="ButtonOptionsOK" type="Button" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+theme = ExtResource("2_0dwhk")
+text = "OK"
 
 [node name="FileDialogOpen" type="FileDialog" parent="."]
 unique_name_in_owner = true
@@ -199,11 +328,17 @@ initial_position = 4
 filters = PackedStringArray("*.png")
 use_native_dialog = true
 
-[connection signal="pressed" from="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerPalette/HBoxContainerPaletteButtons/ButtonAddPaletteColor" to="." method="_on_button_add_palette_color_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerPalette/HBoxContainerPaletteButtons/ButtonRemovePaletteColor" to="." method="_on_button_remove_palette_color_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerGrayscale/HBoxContainerGrayscaleButtons/ButtonAddGrayscaleColor" to="." method="_on_button_add_grayscale_color_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerGrayscale/HBoxContainerGrayscaleButtons/ButtonRemoveGrayscaleColor" to="." method="_on_button_remove_grayscale_color_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerOpen/ButtonOpen" to="." method="_on_button_open_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerFile/VBoxContainerSave/ButtonSave" to="." method="_on_button_save_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerNewPalette/HBoxContainerNewPaletteButtons/ButtonAddNewPaletteColor" to="." method="_on_button_add_new_palette_color_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerNewPalette/HBoxContainerNewPaletteButtons/ButtonRemoveNewPaletteColor" to="." method="_on_button_remove_new_palette_color_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerCurrentPalette/HBoxContainerCurrentPaletteButtons/ButtonAddCurrentPaletteColor" to="." method="_on_button_add_current_palette_color_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/MarginContainer/VBoxContainerColors/HBoxContainerContent/VBoxContainerCurrentPalette/HBoxContainerCurrentPaletteButtons/ButtonRemoveCurrentPaletteColor" to="." method="_on_button_remove_current_palette_color_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons/ButtonOpen" to="." method="_on_button_open_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons/ButtonOptions" to="." method="_on_button_options_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons/ButtonProcess" to="." method="_on_button_process_pressed"]
+[connection signal="pressed" from="MarginContainerMain/HBoxContainer/VBoxContainerFileImage/MarginContainer/HBoxContainerButtons/ButtonSave" to="." method="_on_button_save_pressed"]
+[connection signal="item_selected" from="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerGrayscale/OptionButtonGrayscale" to="." method="_on_option_button_grayscale_item_selected"]
+[connection signal="item_selected" from="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerDitheringTechnique/OptionButtonDitheringTechnique" to="." method="_on_option_button_dithering_technique_item_selected"]
+[connection signal="item_selected" from="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/HBoxContainerDitheringAlgorithm/OptionButtonDitheringAlgorithm" to="." method="_on_option_button_dithering_algorithm_item_selected"]
+[connection signal="pressed" from="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions/ButtonOptionsOK" to="." method="_on_button_options_ok_pressed"]
 [connection signal="file_selected" from="FileDialogOpen" to="." method="_on_file_dialog_open_file_selected"]
 [connection signal="file_selected" from="FileDialogSave" to="." method="_on_file_dialog_save_file_selected"]
