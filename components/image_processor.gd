@@ -15,19 +15,25 @@ extends Node
 #   or sparser dithering depending on the intensity of the color along the axis
 # - Stucki technique keeps track of error along two dimensions according to a weighted grid
 
-
 #region Constants
 const COLOR_CHANNEL_RESOLUTION : float = (1.0 / 256.0)
 
 const GRAYSCALE_METHOD_INDEX_R : int = 0
 const GRAYSCALE_METHOD_INDEX_G : int = 1
 const GRAYSCALE_METHOD_INDEX_B : int = 2
+const GRAYSCALE_STANDARD : Array[float] = [1.0, 1.0, 1.0]
 const GRAYSCALE_BT709 : Array[float] = [0.2126, 0.7152, 0.0722]
 const GRAYSCALE_BT601 : Array[float] = [0.299, 0.587, 0.114]
 const GRAYSCALE_PHOTOSHOP : Array[float] = [0.30, 0.59, 0.11]
+const GRAYSCALE_R_CHANNEL : Array[float] = [1.0, 0.0, 0.0]
+const GRAYSCALE_G_CHANNEL : Array[float] = [0.0, 1.0, 0.0]
+const GRAYSCALE_B_CHANNEL : Array[float] = [0.0, 0.0, 1.0]
+const GRAYSCALE_RG_CHANNEL : Array[float] = [1.0, 1.0, 0.0]
+const GRAYSCALE_RB_CHANNEL : Array[float] = [1.0, 0.0, 1.0]
+const GRAYSCALE_GB_CHANNEL : Array[float] = [0.0, 1.0, 1.0]
 
 const PALETTE_SIZE_MIN : int = 2
-const PALETTE_SIZE_MAX : int = 13
+const PALETTE_SIZE_MAX : int = 12
 
 const ERROR_COORDINATES_STUCKI : Array[Vector2i] = [
 	Vector2i(1, 0),
@@ -66,10 +72,7 @@ var image : Image = null
 var palette : Array[Color] = []
 var intensity_range : Vector2 = Vector2(1.0, 0.0)
 
-func _ready() -> void:
-	
-	return
-
+# sets local variables to default values
 func reset() -> void:
 	image = null
 	palette = []
@@ -87,9 +90,9 @@ func grayscale(method : Array[float]) -> void:
 			var pixel : Color = image.get_pixel(col, row)
 			var intensity : float = (method[GRAYSCALE_METHOD_INDEX_R] * pixel.r) + (method[GRAYSCALE_METHOD_INDEX_G] * pixel.g) + (method[GRAYSCALE_METHOD_INDEX_B] * pixel.b)
 			if(intensity < intensity_range.x):
-				intensity_range.x = pixel.r
+				intensity_range.x = intensity
 			if(intensity > intensity_range.y):
-				intensity_range.y = pixel.r
+				intensity_range.y = intensity
 			var pixel_grayscale : Color = Color(intensity, intensity, intensity, pixel.a)
 			image.set_pixel(col, row, pixel_grayscale)
 	return
@@ -110,7 +113,7 @@ func reduce_palette(num_colors : int) -> void:
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step)
+			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
 			var pixel_reduced : Color = Color(intensity, intensity, intensity, pixel.a)
 			image.set_pixel(col, row, pixel_reduced)
 	# fill palette with possible colors based on num_colors and intensity range
@@ -169,7 +172,7 @@ func dither_intermediate_linear() -> void:
 		var error : float = 0.0
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step)
+			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
 			var pixel_dithered : Color = Color()
 			# odd, or "intermediate" color indexes
 			if(int(intensity / step) % 2 == 1):
@@ -209,7 +212,7 @@ func dither_intermediate_stucki() -> void:
 		for col : int in range(image.get_width()):
 			var pixel_error : float = error[row][col]
 			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step)
+			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
 			var pixel_dithered : Color = Color()
 			# odd, or "intermediate" color indexes
 			if(int(intensity / step) % 2 == 1):
@@ -266,11 +269,22 @@ func _strip_palette() -> void:
 	return
 
 # replaces the palette with the colors currently in the image
-func _update_palette() -> void:
+func _update_palette_intensity_range() -> void:
 	palette.resize(0)
+	intensity_range = Vector2(1.0, 0.0)
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
 			if(not pixel in palette):
 				palette.append(pixel)
+			if(pixel.r < intensity_range.x):
+				intensity_range.x = pixel.r
+			if(pixel.r > intensity_range.y):
+				intensity_range.y = pixel.r
+	for index_primary : int in range(0, palette.size() - 1):
+		for index_secondary : int in range(index_primary, palette.size()):
+			if(palette[index_secondary].r < palette[index_primary].r):
+				var temp : Color = palette[index_primary]
+				palette[index_primary] = palette[index_secondary]
+				palette[index_secondary] = temp
 	return

@@ -3,9 +3,16 @@ extends Node
 
 #region Constants and Enums
 enum GrayscaleMethod {
+	STANDARD,
 	BT709,
 	BT601,
-	PHOTOSHOP
+	PHOTOSHOP,
+	R_CHANNEL,
+	G_CHANNEL,
+	B_CHANNEL,
+	RG_CHANNEL,
+	RB_CHANNEL,
+	GB_CHANNEL
 }
 
 enum DitheringTechnique {
@@ -162,12 +169,26 @@ func _on_file_save(file_name : String) -> void:
 
 func _on_process() -> void:
 	match grayscale_method:
+		GrayscaleMethod.STANDARD:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_STANDARD)
 		GrayscaleMethod.BT709:
 			image_processor.grayscale(ImageProcessor.GRAYSCALE_BT709)
 		GrayscaleMethod.BT601:
 			image_processor.grayscale(ImageProcessor.GRAYSCALE_BT601)
 		GrayscaleMethod.PHOTOSHOP:
 			image_processor.grayscale(ImageProcessor.GRAYSCALE_PHOTOSHOP)
+		GrayscaleMethod.R_CHANNEL:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_R_CHANNEL)
+		GrayscaleMethod.G_CHANNEL:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_G_CHANNEL)
+		GrayscaleMethod.B_CHANNEL:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_B_CHANNEL)
+		GrayscaleMethod.RG_CHANNEL:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_RG_CHANNEL)
+		GrayscaleMethod.RB_CHANNEL:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_RB_CHANNEL)
+		GrayscaleMethod.GB_CHANNEL:
+			image_processor.grayscale(ImageProcessor.GRAYSCALE_GB_CHANNEL)
 		_:
 			print("error: invalid grayscale method - ", grayscale_method)
 	ui.set_image(image_processor.image)
@@ -186,7 +207,6 @@ func _on_process() -> void:
 				DitheringAlgorithm.LINEAR:
 					image_processor.dither_intermediate_linear()
 				DitheringAlgorithm.STUCKI:
-					print("here")
 					image_processor.dither_intermediate_stucki()
 				_:
 					print("error: invalid dithering algorithm - ", dithering_algorithm)

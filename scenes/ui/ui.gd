@@ -14,9 +14,16 @@ signal apply_new_palette
 #region Constants
 const COLOR_SELECTOR : PackedScene = preload("res://scenes/ui/color_selector/color_selector.tscn")
 
-const INDEX_GRAYSCALE_METHOD_BT709 : int = 0
-const INDEX_GRAYSCALE_METHOD_BT601 : int = 1
-const INDEX_GRAYSCALE_METHOD_PHOTOSHOP : int = 2
+const INDEX_GRAYSCALE_METHOD_STANDARD : int = 0
+const INDEX_GRAYSCALE_METHOD_BT709 : int = 1
+const INDEX_GRAYSCALE_METHOD_BT601 : int = 2
+const INDEX_GRAYSCALE_METHOD_PHOTOSHOP : int = 3
+const INDEX_GRAYSCALE_METHOD_R_CHANNEL : int = 4
+const INDEX_GRAYSCALE_METHOD_G_CHANNEL : int = 5
+const INDEX_GRAYSCALE_METHOD_B_CHANNEL : int = 6
+const INDEX_GRAYSCALE_METHOD_RG_CHANNEL : int = 7
+const INDEX_GRAYSCALE_METHOD_RB_CHANNEL : int = 8
+const INDEX_GRAYSCALE_METHOD_GB_CHANNEL : int = 9
 
 const INDEX_DITHERING_TECHNIQUE_NONE : int = 0
 const INDEX_DITHERING_TECHNIQUE_REDUCE_ONLY : int = 1
@@ -51,6 +58,9 @@ var menu_button_load : MenuButton = null
 var texture_rect_image : TextureRect = null
 
 var panel_container_options : PanelContainer = null
+var option_button_grayscale : OptionButton = null
+var option_button_dithering_technique : OptionButton = null
+var option_button_dithering_algorithm : OptionButton = null
 var panel_container_help : PanelContainer = null
 var panel_container_about : PanelContainer = null
 
@@ -64,6 +74,9 @@ func _ready() -> void:
 	menu_button_load = %MenuButtonLoad
 	texture_rect_image = %TextureRectImage
 	panel_container_options = %PanelContainerOptions
+	option_button_grayscale = %OptionButtonGrayscale
+	option_button_dithering_technique = %OptionButtonDitheringTechnique
+	option_button_dithering_algorithm = %OptionButtonDitheringAlgorithm
 	panel_container_help = %PanelContainerHelp
 	panel_container_about = %PanelContainerAbout
 	file_dialog_open = %FileDialogOpen
@@ -180,6 +193,7 @@ func _on_file_dialog_save_file_selected(path: String) -> void:
 	return
 
 func _on_button_open_pressed() -> void:
+	close_popups()
 	file_dialog_open.popup_centered_ratio()
 	return
 
@@ -189,10 +203,12 @@ func _on_button_options_pressed() -> void:
 	return
 
 func _on_button_process_pressed() -> void:
+	close_popups()
 	process.emit()
 	return
 
 func _on_button_save_pressed() -> void:
+	close_popups()
 	file_dialog_save.popup_centered_ratio()
 	return
 
@@ -208,19 +224,35 @@ func _on_button_about_pressed() -> void:
 
 func _on_option_button_grayscale_item_selected(index: int) -> void:
 	match index:
+		INDEX_GRAYSCALE_METHOD_STANDARD:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.STANDARD)
 		INDEX_GRAYSCALE_METHOD_BT709:
 			grayscale_method_selected.emit(Main.GrayscaleMethod.BT709)
 		INDEX_GRAYSCALE_METHOD_BT601:
 			grayscale_method_selected.emit(Main.GrayscaleMethod.BT601)
 		INDEX_GRAYSCALE_METHOD_PHOTOSHOP:
 			grayscale_method_selected.emit(Main.GrayscaleMethod.PHOTOSHOP)
+		INDEX_GRAYSCALE_METHOD_R_CHANNEL:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.R_CHANNEL)
+		INDEX_GRAYSCALE_METHOD_G_CHANNEL:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.G_CHANNEL)
+		INDEX_GRAYSCALE_METHOD_B_CHANNEL:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.B_CHANNEL)
+		INDEX_GRAYSCALE_METHOD_RG_CHANNEL:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.RG_CHANNEL)
+		INDEX_GRAYSCALE_METHOD_RB_CHANNEL:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.RB_CHANNEL)
+		INDEX_GRAYSCALE_METHOD_GB_CHANNEL:
+			grayscale_method_selected.emit(Main.GrayscaleMethod.GB_CHANNEL)
 	return
 
 func _on_option_button_dithering_technique_item_selected(index: int) -> void:
 	match index:
 		INDEX_DITHERING_TECHNIQUE_NONE:
+			option_button_dithering_algorithm.select(INDEX_DITHERING_ALGORITHM_NONE)
 			dithering_technique_selected.emit(Main.DitheringTechnique.NONE)
 		INDEX_DITHERING_TECHNIQUE_REDUCE_ONLY:
+			option_button_dithering_algorithm.select(INDEX_DITHERING_ALGORITHM_NONE)
 			dithering_technique_selected.emit(Main.DitheringTechnique.REDUCE_ONLY)
 		INDEX_DITHERING_TECHNIQUE_INTERMEDIATE:
 			dithering_technique_selected.emit(Main.DitheringTechnique.INTERMEDIATE)
@@ -231,6 +263,7 @@ func _on_option_button_dithering_technique_item_selected(index: int) -> void:
 func _on_option_button_dithering_algorithm_item_selected(index: int) -> void:
 	match index:
 		INDEX_DITHERING_ALGORITHM_NONE:
+			option_button_dithering_technique.select(INDEX_DITHERING_ALGORITHM_NONE)
 			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.NONE)
 		INDEX_DITHERING_ALGORITHM_STANDARD:
 			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.STANDARD)
@@ -253,10 +286,12 @@ func _on_button_about_ok_pressed() -> void:
 	return
 
 func _on_button_palette_add_color_pressed() -> void:
+	close_popups()
 	add_color_selector_new_palette()
 	return
 
 func _on_button_palette_remove_color_pressed() -> void:
+	close_popups()
 	remove_color_selector_new_palette()
 	return
 
@@ -285,6 +320,7 @@ func _on_popup_menu_load_id_pressed(id : int) -> void:
 	return
 
 func _on_button_palette_apply_pressed() -> void:
+	close_popups()
 	apply_new_palette.emit()
 	return
 #endregion
