@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bi07p5gswmqvk"]
-
-[ext_resource type="Script" uid="uid://c30bj0csw1uio" path="res://scenes/image_processor/image_processor.gd" id="1_6fh1o"]
-
-[node name="ImageProcessor" type="Node"]
-script = ExtResource("1_6fh1o")

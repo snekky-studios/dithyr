@@ -4,16 +4,16 @@
 [ext_resource type="Theme" uid="uid://bsunhvxrt1csx" path="res://resources/themes/theme.tres" id="1_yi01m"]
 
 [node name="ColorSelector" type="HBoxContainer"]
-custom_minimum_size = Vector2(88, 22)
-offset_right = 88.0
-offset_bottom = 22.0
+custom_minimum_size = Vector2(156, 36)
+offset_right = 156.0
+offset_bottom = 36.0
 theme = ExtResource("1_yi01m")
 alignment = 1
 script = ExtResource("1_gkabu")
 
 [node name="ColorRectLeft" type="ColorRect" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(22, 22)
+custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 mouse_filter = 2
 theme = ExtResource("1_yi01m")
@@ -30,7 +30,7 @@ max_length = 7
 [node name="ColorRectRight" type="ColorRect" parent="."]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(22, 22)
+custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 mouse_filter = 2
 theme = ExtResource("1_yi01m")

@@ -1,7 +1,7 @@
 class_name Main
 extends Node
 
-#region Constants
+#region Constants and Enums
 enum GrayscaleMethod {
 	BT709,
 	BT601,
@@ -9,24 +9,68 @@ enum GrayscaleMethod {
 }
 
 enum DitheringTechnique {
+	NONE,
+	REDUCE_ONLY,
 	INTERMEDIATE,
 	CONTINUOUS
 }
 
 enum DitheringAlgorithm {
+	NONE,
 	STANDARD,
 	LINEAR,
 	STUCKI
 }
 
-const PALETTE_CRIMSON : Array[Color] = [
-	Color(0.106, 0.012, 0.149),
-	Color(0.478, 0.11, 0.294),
-	Color(0.729, 0.314, 0.267),
-	Color(0.937, 0.976, 0.839)
+enum PalettePreset {
+	SLS08,
+	_1BIT_MONITOR_GLOW,
+	MIDNIGHT_ABLAZE,
+	TWILIGHT5,
+	BLESSING,
+	CRIMSON,
+	BERRY_NEBULA,
+	NEO5
+}
+
+const PalettePresetPalette : Dictionary[PalettePreset, Array] = {
+	PalettePreset.SLS08 : PALETTE_SLSO8,
+	PalettePreset._1BIT_MONITOR_GLOW : PALETTE_1BIT_MONITOR_GLOW,
+	PalettePreset.MIDNIGHT_ABLAZE : PALETTE_MIDNIGHT_ABLAZE,
+	PalettePreset.TWILIGHT5 : PALETTE_TWILIGHT5,
+	PalettePreset.BLESSING : PALETTE_BLESSING,
+	PalettePreset.CRIMSON : PALETTE_CRIMSON,
+	PalettePreset.BERRY_NEBULA : PALETTE_BERRY_NEBULA,
+	PalettePreset.NEO5 : PALETTE_NEO5,
+}
+
+const PALETTE_SLSO8 : Array[Color] = [
+	Color(0.051, 0.169, 0.271),
+	Color(0.125, 0.235, 0.337),
+	Color(0.329, 0.306, 0.408),
+	Color(0.553, 0.412, 0.478),
+	Color(0.816, 0.506, 0.349),
+	Color(1.0, 0.667, 0.369),
+	Color(1.0, 0.831, 0.639),
+	Color(1.0, 0.925, 0.839)
 ]
 
-const PALETTE_TWILIGHT : Array[Color] = [
+const PALETTE_1BIT_MONITOR_GLOW : Array[Color] = [
+	Color(0.133, 0.137, 0.137),
+	Color(0.941, 0.965, 0.941)
+]
+
+const PALETTE_MIDNIGHT_ABLAZE : Array[Color] = [
+	Color(0.075, 0.008, 0.031),
+	Color(0.122, 0.02, 0.063),
+	Color(0.192, 0.02, 0.118),
+	Color(0.275, 0.055, 0.169),
+	Color(0.486, 0.094, 0.235),
+	Color(0.835, 0.235, 0.416),
+	Color(1.0, 0.51, 0.455)
+]
+
+const PALETTE_TWILIGHT5 : Array[Color] = [
 	Color(0.161, 0.157, 0.192),
 	Color(0.2, 0.247, 0.345),
 	Color(0.29, 0.478, 0.588),
@@ -34,12 +78,19 @@ const PALETTE_TWILIGHT : Array[Color] = [
 	Color(0.984, 0.733, 0.678)
 ]
 
-const PALETTE_NEO : Array[Color] = [
-	Color(0.055, 0.055, 0.055),
-	Color(0.329, 0.2, 0.745),
-	Color(0.902, 0.141, 0.686),
-	Color(0.239, 0.976, 0.918),
-	Color(0.937, 0.98, 0.98)
+const PALETTE_BLESSING : Array[Color] = [
+	Color(0.455, 0.337, 0.608),
+	Color(0.588, 0.984, 0.78),
+	Color(1.0, 0.702, 0.796),
+	Color(0.847, 0.749, 0.847),
+	Color(0.969, 1.0, 0.682)
+]
+
+const PALETTE_CRIMSON : Array[Color] = [
+	Color(0.106, 0.012, 0.149),
+	Color(0.478, 0.11, 0.294),
+	Color(0.729, 0.314, 0.267),
+	Color(0.937, 0.976, 0.839)
 ]
 
 const PALETTE_BERRY_NEBULA : Array[Color] = [
@@ -52,9 +103,18 @@ const PALETTE_BERRY_NEBULA : Array[Color] = [
 	Color(0.424, 0.725, 0.788),
 	Color(0.424, 0.929, 0.929)
 ]
+
+const PALETTE_NEO5 : Array[Color] = [
+	Color(0.055, 0.055, 0.055),
+	Color(0.329, 0.2, 0.745),
+	Color(0.902, 0.141, 0.686),
+	Color(0.239, 0.976, 0.918),
+	Color(0.937, 0.98, 0.98)
+]
 #endregion
 
 var image_processor : ImageProcessor = null
+var new_palette : Array[Color] = []
 var grayscale_method : GrayscaleMethod = GrayscaleMethod.BT709
 var dithering_technique : DitheringTechnique = DitheringTechnique.INTERMEDIATE
 var dithering_algorithm : DitheringAlgorithm = DitheringAlgorithm.STANDARD
@@ -70,8 +130,13 @@ func _ready() -> void:
 	ui.grayscale_method_selected.connect(_on_grayscale_method_selected)
 	ui.dithering_technique_selected.connect(_on_dithering_technique_selected)
 	ui.dithering_algorithm_selected.connect(_on_dithering_algorithm_selected)
+	ui.palette_preset_selected.connect(_on_palette_preset_selected)
+	ui.new_palette_changed.connect(_on_new_palette_changed)
+	ui.apply_new_palette.connect(_on_apply_new_palette)
 	
 	image_processor = ImageProcessor.new()
+	
+	new_palette = ui.get_colors_new_palette()
 	return
 
 func _load(file_path : String) -> Image:
@@ -84,6 +149,7 @@ func _save(image : Image, file_path : String) -> void:
 	assert(error == OK, "Save error: " + str(error))
 	return
 
+#region Callbacks
 func _on_file_open(file_name : String) -> void:
 	image_processor.reset()
 	image_processor.image = _load(file_name)
@@ -107,26 +173,31 @@ func _on_process() -> void:
 	ui.set_image(image_processor.image)
 	
 	match dithering_technique:
-		DitheringTechnique.INTERMEDIATE:
-			image_processor.reduce_palette(7)
+		DitheringTechnique.NONE:
+			pass
+		DitheringTechnique.REDUCE_ONLY:
+			image_processor.reduce_palette(new_palette.size())
 			ui.set_image(image_processor.image)
+		DitheringTechnique.INTERMEDIATE:
+			image_processor.reduce_palette((new_palette.size() * 2) - 1)
 			match dithering_algorithm:
 				DitheringAlgorithm.STANDARD:
 					image_processor.dither_intermediate_standard()
 				DitheringAlgorithm.LINEAR:
 					image_processor.dither_intermediate_linear()
 				DitheringAlgorithm.STUCKI:
+					print("here")
 					image_processor.dither_intermediate_stucki()
 				_:
 					print("error: invalid dithering algorithm - ", dithering_algorithm)
+			ui.set_image(image_processor.image)
 		DitheringTechnique.CONTINUOUS:
 			pass
 		_:
 			print("error: invalid dithering technique - ", dithering_technique)
 	ui.set_image(image_processor.image)
-
-	image_processor.palette_swap(PALETTE_CRIMSON)
-	ui.set_image(image_processor.image)
+	ui.remove_all_color_selectors_current_palette()
+	ui.add_color_selector_array_current_palette(image_processor.palette)
 	return
 
 func _on_grayscale_method_selected(value : GrayscaleMethod) -> void:
@@ -140,3 +211,21 @@ func _on_dithering_technique_selected(value : DitheringTechnique) -> void:
 func _on_dithering_algorithm_selected(value : DitheringAlgorithm) -> void:
 	dithering_algorithm = value
 	return
+
+func _on_palette_preset_selected(value : PalettePreset) -> void:
+	new_palette = PalettePresetPalette[value]
+	ui.remove_all_color_selectors_new_palette()
+	ui.add_color_selector_array_new_palette(new_palette)
+	return
+
+func _on_new_palette_changed(value : Array[Color]) -> void:
+	new_palette = value
+	return
+
+func _on_apply_new_palette() -> void:
+	image_processor.palette_swap(new_palette)
+	ui.set_image(image_processor.image)
+	ui.remove_all_color_selectors_current_palette()
+	ui.add_color_selector_array_current_palette(image_processor.palette)
+	return
+#endregion

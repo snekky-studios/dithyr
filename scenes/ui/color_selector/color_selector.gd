@@ -1,6 +1,8 @@
 class_name ColorSelector
 extends HBoxContainer
 
+signal color_changed
+
 const MAX_LENGTH : int = 7 # enough for # + six digits
 
 var color : Color = Color()
@@ -53,4 +55,5 @@ func _on_text_changed(new_text : String) -> void:
 	color = Color.hex(hex)
 	color_rect_left.color = color
 	color_rect_right.color = color
+	color_changed.emit()
 	return
