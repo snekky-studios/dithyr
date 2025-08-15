@@ -15,6 +15,19 @@ enum GrayscaleMethod {
 	GB_CHANNEL
 }
 
+const GrayscaleWeights : Dictionary[GrayscaleMethod, Array] = {
+	GrayscaleMethod.STANDARD : ImageProcessor.GRAYSCALE_STANDARD,
+	GrayscaleMethod.BT709 : ImageProcessor.GRAYSCALE_BT709,
+	GrayscaleMethod.BT601 : ImageProcessor.GRAYSCALE_BT601,
+	GrayscaleMethod.PHOTOSHOP : ImageProcessor.GRAYSCALE_PHOTOSHOP,
+	GrayscaleMethod.R_CHANNEL : ImageProcessor.GRAYSCALE_R_CHANNEL,
+	GrayscaleMethod.G_CHANNEL : ImageProcessor.GRAYSCALE_G_CHANNEL,
+	GrayscaleMethod.B_CHANNEL : ImageProcessor.GRAYSCALE_B_CHANNEL,
+	GrayscaleMethod.RG_CHANNEL : ImageProcessor.GRAYSCALE_RG_CHANNEL,
+	GrayscaleMethod.RB_CHANNEL : ImageProcessor.GRAYSCALE_RB_CHANNEL,
+	GrayscaleMethod.GB_CHANNEL : ImageProcessor.GRAYSCALE_GB_CHANNEL
+}
+
 enum DitheringTechnique {
 	NONE,
 	REDUCE_ONLY,
@@ -88,9 +101,9 @@ const PALETTE_TWILIGHT5 : Array[Color] = [
 
 const PALETTE_BLESSING : Array[Color] = [
 	Color(0.455, 0.337, 0.608),
-	Color(0.588, 0.984, 0.78),
 	Color(1.0, 0.702, 0.796),
 	Color(0.847, 0.749, 0.847),
+	Color(0.588, 0.984, 0.78),
 	Color(0.969, 1.0, 0.682)
 ]
 
@@ -213,54 +226,25 @@ func _on_file_save(file_name : String) -> void:
 	return
 
 func _on_process() -> void:
-	match grayscale_method:
-		GrayscaleMethod.STANDARD:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_STANDARD)
-		GrayscaleMethod.BT709:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_BT709)
-		GrayscaleMethod.BT601:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_BT601)
-		GrayscaleMethod.PHOTOSHOP:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_PHOTOSHOP)
-		GrayscaleMethod.R_CHANNEL:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_R_CHANNEL)
-		GrayscaleMethod.G_CHANNEL:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_G_CHANNEL)
-		GrayscaleMethod.B_CHANNEL:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_B_CHANNEL)
-		GrayscaleMethod.RG_CHANNEL:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_RG_CHANNEL)
-		GrayscaleMethod.RB_CHANNEL:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_RB_CHANNEL)
-		GrayscaleMethod.GB_CHANNEL:
-			image_processor.grayscale(ImageProcessor.GRAYSCALE_GB_CHANNEL)
-		_:
-			print("error: invalid grayscale method - ", grayscale_method)
+	image_processor.grayscale8(GrayscaleWeights[grayscale_method])
 	ui.set_image(image_processor.image)
 	
 	match dithering_technique:
 		DitheringTechnique.NONE:
 			pass
 		DitheringTechnique.REDUCE_ONLY:
-			image_processor.reduce_palette(new_palette.size())
+			image_processor.reduce_palette8(dithering_technique, new_palette.size())
 			ui.set_image(image_processor.image)
-		DitheringTechnique.INTERMEDIATE:
-			image_processor.reduce_palette((new_palette.size() * 2) - 1)
-			match dithering_algorithm:
-				DitheringAlgorithm.STANDARD:
-					image_processor.dither_intermediate_standard()
-				DitheringAlgorithm.LINEAR:
-					image_processor.dither_intermediate_linear()
-				DitheringAlgorithm.FLOYD_STEINBERG, DitheringAlgorithm.STUCKI:
-					image_processor.dither_intermediate(dithering_algorithm)
-				_:
-					print("error: invalid dithering algorithm - ", dithering_algorithm)
+		DitheringTechnique.INTERMEDIATE, DitheringTechnique.CONTINUOUS:
+			if(dithering_algorithm == DitheringAlgorithm.STANDARD):
+				image_processor.dither_intermediate_standard8(new_palette.size())
+			else:
+				image_processor.dither8(dithering_technique, dithering_algorithm, new_palette.size())
 			ui.set_image(image_processor.image)
-		DitheringTechnique.CONTINUOUS:
-			pass
 		_:
 			print("error: invalid dithering technique - ", dithering_technique)
 	ui.set_image(image_processor.image)
+	
 	ui.remove_all_color_selectors_current_palette()
 	ui.add_color_selector_array_current_palette(image_processor.palette)
 	return

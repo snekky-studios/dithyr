@@ -17,20 +17,24 @@ extends Node
 
 #region Constants
 const COLOR_CHANNEL_RESOLUTION : float = (1.0 / 256.0)
+const COLOR_CHANNEL_MIN8 : int = 0
+const COLOR_CHANNEL_MAX8 : int = 255
+
+const ONE_THIRD : float = float(1.0 / 3.0)
 
 const GRAYSCALE_METHOD_INDEX_R : int = 0
 const GRAYSCALE_METHOD_INDEX_G : int = 1
 const GRAYSCALE_METHOD_INDEX_B : int = 2
-const GRAYSCALE_STANDARD : Array[float] = [1.0, 1.0, 1.0]
+const GRAYSCALE_STANDARD : Array[float] = [ONE_THIRD, ONE_THIRD, ONE_THIRD]
 const GRAYSCALE_BT709 : Array[float] = [0.2126, 0.7152, 0.0722]
 const GRAYSCALE_BT601 : Array[float] = [0.299, 0.587, 0.114]
 const GRAYSCALE_PHOTOSHOP : Array[float] = [0.30, 0.59, 0.11]
 const GRAYSCALE_R_CHANNEL : Array[float] = [1.0, 0.0, 0.0]
 const GRAYSCALE_G_CHANNEL : Array[float] = [0.0, 1.0, 0.0]
 const GRAYSCALE_B_CHANNEL : Array[float] = [0.0, 0.0, 1.0]
-const GRAYSCALE_RG_CHANNEL : Array[float] = [1.0, 1.0, 0.0]
-const GRAYSCALE_RB_CHANNEL : Array[float] = [1.0, 0.0, 1.0]
-const GRAYSCALE_GB_CHANNEL : Array[float] = [0.0, 1.0, 1.0]
+const GRAYSCALE_RG_CHANNEL : Array[float] = [0.5, 0.5, 0.0]
+const GRAYSCALE_RB_CHANNEL : Array[float] = [0.5, 0.0, 0.5]
+const GRAYSCALE_GB_CHANNEL : Array[float] = [0.0, 0.5, 0.5]
 
 const PALETTE_SIZE_MIN : int = 2
 const PALETTE_SIZE_MAX : int = 12
@@ -93,138 +97,156 @@ const ERROR_SCALARS_STUCKI : Dictionary[Vector2i, float] = {
 
 var image : Image = null
 var palette : Array[Color] = []
-var intensity_range : Vector2 = Vector2(1.0, 0.0)
+var intensity_range8 : Vector2i = Vector2(COLOR_CHANNEL_MAX8, COLOR_CHANNEL_MIN8)
 
 # sets local variables to default values
 func reset() -> void:
 	image = null
 	palette = []
-	intensity_range = Vector2(1.0, 0.0)
+	intensity_range8 = Vector2(COLOR_CHANNEL_MAX8, COLOR_CHANNEL_MIN8)
 	return
 
 # converts image to grayscale by applying rgb weights supplied in method
 # also calculates intensity range to prevent having to loop through all pixels again
-func grayscale(method : Array[float]) -> void:
+func grayscale8(method : Array[float]) -> void:
 	if(image == null):
 		print("error: grayscale called with no image")
 		return
+	intensity_range8 = Vector2i(COLOR_CHANNEL_MAX8, COLOR_CHANNEL_MIN8)
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = (method[GRAYSCALE_METHOD_INDEX_R] * pixel.r) + (method[GRAYSCALE_METHOD_INDEX_G] * pixel.g) + (method[GRAYSCALE_METHOD_INDEX_B] * pixel.b)
-			if(intensity < intensity_range.x):
-				intensity_range.x = intensity
-			if(intensity > intensity_range.y):
-				intensity_range.y = intensity
-			var pixel_grayscale : Color = Color(intensity, intensity, intensity, pixel.a)
+			var intensity : int = int((method[GRAYSCALE_METHOD_INDEX_R] * float(pixel.r8)) + (method[GRAYSCALE_METHOD_INDEX_G] * float(pixel.g8)) + (method[GRAYSCALE_METHOD_INDEX_B] * float(pixel.b8)))
+			if(intensity < intensity_range8.x):
+				intensity_range8.x = intensity
+			if(intensity > intensity_range8.y):
+				intensity_range8.y = intensity
+			var pixel_grayscale : Color = Color.from_rgba8(intensity, intensity, intensity, pixel.a8)
 			image.set_pixel(col, row, pixel_grayscale)
+	if(intensity_range8.x == intensity_range8.y):
+		intensity_range8 = Vector2i(COLOR_CHANNEL_MIN8, COLOR_CHANNEL_MAX8)
 	return
 
 # condenses the palette present in image into num_colors, evenly spaced in the intensity range
 # also populates the palette array to prevent having to loop through all pixels again
-func reduce_palette(num_colors : int) -> void:
+func reduce_palette8(technique : Main.DitheringTechnique, num_colors : int) -> void:
+	# safety checks
 	if(image == null):
 		print("error: reduce_palette called with no image")
 		return
-	elif(intensity_range.x > intensity_range.y):
-		print("error: reduce_palette called with invalid intensity range - ", intensity_range)
+	elif(intensity_range8.x > intensity_range8.y):
+		print("error: reduce_palette called with invalid intensity range - ", intensity_range8)
 		return
-	elif(num_colors < PALETTE_SIZE_MIN or num_colors > (PALETTE_SIZE_MAX * 2) + 1):
-		print("error: reduce_palette called with invalid number of colors - ", num_colors)
-		return
-	var step : float = (intensity_range.y - intensity_range.x) / float(num_colors - 1)
+	
+	var palette_size : int = num_colors
+	
+	# safety checks
+	if(technique == Main.DitheringTechnique.INTERMEDIATE):
+		palette_size = (num_colors * 2) - 1
+		if(palette_size < PALETTE_SIZE_MIN or palette_size > (PALETTE_SIZE_MAX * 2) - 1 or palette_size % 2 != 1):
+			print("error: reduce_palette called with invalid palette size - ", num_colors)
+			return
+	elif(technique == Main.DitheringTechnique.CONTINUOUS):
+		if(palette_size < PALETTE_SIZE_MIN or palette_size >  PALETTE_SIZE_MAX):
+			print("error: reduce_palette called with invalid palette size - ", num_colors)
+			return
+	
+	var step : int = int(float(intensity_range8.y - intensity_range8.x) / float(palette_size - 1))
+	# fill palette with possible colors based on num_colors and intensity range
+	palette.resize(palette_size)
+	var intensity_palette : int = intensity_range8.x
+	for index_palette : int in range(palette.size()):
+		var pixel_palette : Color = Color.from_rgba8(intensity_palette, intensity_palette, intensity_palette, COLOR_CHANNEL_MAX8)
+		palette[index_palette] = pixel_palette
+		intensity_palette += step
+	
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
-			var pixel_reduced : Color = Color(intensity, intensity, intensity, pixel.a)
+			var intensity : int = snappedi(pixel.r8, step) + intensity_range8.x
+			var pixel_reduced : Color = Color.from_rgba8(intensity, intensity, intensity, pixel.a8)
+			if(technique == Main.DitheringTechnique.INTERMEDIATE):
+				var nearest_palette_index : int = _nearest_palette_index(pixel_reduced)
+				if(not _is_even(nearest_palette_index)):
+					# for intermediate techniques, we only want to dither odd indexes, so skip if even
+					continue
 			image.set_pixel(col, row, pixel_reduced)
-	# fill palette with possible colors based on num_colors and intensity range
-	palette.resize(num_colors)
-	var intensity_palette : float = intensity_range.x
-	for index_palette : int in range(palette.size()):
-		var pixel_palette : Color = Color(intensity_palette, intensity_palette, intensity_palette, 1.0)
-		palette[index_palette] = pixel_palette
-		intensity_palette += step
 	return
 
 # dithers image using intermediate, standard algorithm
-func dither_intermediate_standard() -> void:
+func dither_intermediate_standard8(num_colors : int) -> void:
+	# safety checks
 	if(image == null):
 		print("error: dither_intermediate_standard called with no image")
 		return
-	elif(intensity_range.x > intensity_range.y):
-		print("error: dither_intermediate_standard called with invalid intensity range - ", intensity_range)
+	elif(intensity_range8.x > intensity_range8.y):
+		print("error: dither_intermediate_standard called with invalid intensity range - ", intensity_range8)
 		return
-	elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
-		print("error: dither_intermediate_standard called with invalid palette size - ", palette.size())
+	
+	var palette_size : int = (num_colors * 2) - 1
+	
+	# safety checks
+	if(palette_size < PALETTE_SIZE_MIN or palette_size > (PALETTE_SIZE_MAX * 2) - 1):
+		print("error: dither_intermediate_standard called with invalid palette size - ", palette_size)
 		return
-	# mark odd, "intermediate", indexes for dithering
-	var dithering_indexes : Array[int] = []
-	for index_palette : int in range(1, palette.size(), 2):
-		dithering_indexes.append(index_palette)
+	
+	# fill palette with possible colors based on num_colors and intensity range
+	_build_palette_from_intensity_range8(palette_size)
+	
+	# process image
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
-			for index_dithering : int in dithering_indexes:
-				if(_colors_grayscale_equal(pixel, palette[index_dithering])):
-					var pixel_dithered : Color = Color()
-					# creates a checkerboard dithering pattern by applying alternating pixels as the color index above or below the intermediate index
-					if((row + col) % 2 == 0):
-						pixel_dithered = palette[index_dithering - 1]
-					else:
-						pixel_dithered = palette[index_dithering + 1]
-					image.set_pixel(col, row, pixel_dithered)
-	_strip_palette()
-	return
-
-# dithers image using intermediate, linear (error diffusion) algorithm
-func dither_intermediate_linear() -> void:
-	if(image == null):
-		print("error: dither_intermediate_linear called with no image")
-		return
-	elif(intensity_range.x > intensity_range.y):
-		print("error: dither_intermediate_linear called with invalid intensity range - ", intensity_range)
-		return
-	elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
-		print("error: dither_intermediate_linear called with invalid palette size - ", palette.size())
-		return
-	var step : float = (intensity_range.y - intensity_range.x) / float(palette.size() - 1)
-	# reduce number of colors and build color array
-	for row : int in range(image.get_height()):
-		var error : float = 0.0
-		for col : int in range(image.get_width()):
-			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
 			var pixel_dithered : Color = Color()
-			# odd, or "intermediate" color indexes
-			if(int(intensity / step) % 2 == 1):
-				var pixel_value_adjusted : float = pixel.r + error
-				if(pixel_value_adjusted > intensity):
-					intensity += step
+			var nearest_palette_index : int = _nearest_palette_index(pixel)
+			if(_is_even(nearest_palette_index)):
+				# even indexes get rounded to the nearest palette color
+				pixel_dithered = palette[nearest_palette_index]
+			else:
+				# odd (intermediate) indexes get dithered, checkerboard pattern
+				if(_is_even(row + col)):
+					pixel_dithered = palette[nearest_palette_index - 1]
 				else:
-					intensity -= step
-				error = pixel_value_adjusted - intensity
-			pixel_dithered = Color(intensity, intensity, intensity, pixel.a)
+					pixel_dithered = palette[nearest_palette_index + 1]
 			image.set_pixel(col, row, pixel_dithered)
+	
+	# intermediate algorithms create extra palette indexes, so remove them
 	_strip_palette()
 	return
 
-func dither_intermediate(algorithm : Main.DitheringAlgorithm) -> void:
+# dithers image using continuous technique and applies error matrix according to selected algorithm
+func dither8(technique : Main.DitheringTechnique, algorithm : Main.DitheringAlgorithm, num_colors : int) -> void:
+	# safety checks
 	if(image == null):
-		print("error: dither_intermediate called with no image")
+		print("error: dither called with no image")
 		return
-	elif(intensity_range.x > intensity_range.y):
-		print("error: dither_intermediate called with invalid intensity range - ", intensity_range)
+	elif(intensity_range8.x > intensity_range8.y):
+		# intensity_range is calculated during grayscale conversion, so we should have it here
+		print("error: dither called with invalid intensity range - ", intensity_range8)
 		return
-	elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
-		print("error: dither_intermediate called with invalid palette size - ", palette.size())
-		return
-	var step : float = (intensity_range.y - intensity_range.x) / float(palette.size() - 1)
+	
+	var palette_size : int = num_colors
+	
+	# safety checks
+	if(technique == Main.DitheringTechnique.INTERMEDIATE):
+		palette_size = (num_colors * 2) - 1
+		if(palette_size < PALETTE_SIZE_MIN or palette_size > (PALETTE_SIZE_MAX * 2) - 1):
+			print("error: dither called with invalid palette size - ", palette_size)
+			return
+	elif(technique == Main.DitheringTechnique.CONTINUOUS):
+		if(palette_size < PALETTE_SIZE_MIN or palette_size >  PALETTE_SIZE_MAX):
+			print("error: dither called with invalid palette size - ", palette_size)
+			return
+	else:
+		print("error: invalid dithering technique - ", technique)
+	
+	# fill palette with possible colors based on num_colors and intensity range
+	_build_palette_from_intensity_range8(palette_size)
+	
+	# initialize error array
 	var error : Array[Array] = []
 	var error_coordinates : Array[Vector2i] = []
 	var error_scalars : Dictionary[Vector2i, float] = {}
-	## initialize error array
 	error.resize(image.get_height())
 	error.fill([])
 	for row : int in range(image.get_height()):
@@ -232,6 +254,7 @@ func dither_intermediate(algorithm : Main.DitheringAlgorithm) -> void:
 		error_row.resize(image.get_width())
 		error_row.fill(0.0)
 		error[row] = error_row
+	
 	# set error coordinates and scalars
 	match algorithm:
 		Main.DitheringAlgorithm.LINEAR:
@@ -243,115 +266,74 @@ func dither_intermediate(algorithm : Main.DitheringAlgorithm) -> void:
 		Main.DitheringAlgorithm.STUCKI:
 			error_coordinates = ERROR_COORDINATES_STUCKI
 			error_scalars = ERROR_SCALARS_STUCKI
-	for row : int in range(image.get_height()):
-		for col : int in range(image.get_width()):
-			var pixel_error : float = error[row][col]
-			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
-			var pixel_dithered : Color = Color()
-			# odd, or "intermediate" color indexes
-			if(int(intensity / step) % 2 == 1):
-				var pixel_value_adjusted : float = pixel.r + pixel_error
-				if(pixel_value_adjusted > intensity):
-					intensity += step
+	
+	# process image
+	if(technique == Main.DitheringTechnique.INTERMEDIATE):
+		for row : int in range(image.get_height()):
+			for col : int in range(image.get_width()):
+				var pixel : Color = image.get_pixel(col, row)
+				var pixel_dithered : Color = Color()
+				var nearest_palette_index : int = _nearest_palette_index(pixel)
+				if(_is_even(nearest_palette_index)):
+					# even indexes get rounded to the nearest palette color
+					pixel_dithered = palette[nearest_palette_index]
 				else:
-					intensity -= step
-				pixel_error = pixel_value_adjusted - intensity
+					# odd (intermediate) indexes get dithered
+					var pixel_error : float = error[row][col]
+					var pixel_value_adjusted : int = int(float(pixel.r8) + (pixel_error * float(COLOR_CHANNEL_MAX8)))
+					var pixel_adjusted : Color = Color.from_rgba8(pixel_value_adjusted, pixel_value_adjusted, pixel_value_adjusted, pixel.a8)
+					var palette_index : int = _nearest_palette_index_even(pixel_adjusted)
+					pixel_dithered = palette[palette_index]
+					pixel_error = _color_distance(pixel_dithered, pixel_adjusted)
+					for error_coordinate : Vector2i in error_coordinates:
+						var new_row : int = row + error_coordinate.y
+						var new_col : int = col + error_coordinate.x
+						if(new_row < 0 or new_row >= error.size() or new_col < 0 or new_col >= error[0].size()):
+							continue
+						error[new_row][new_col] += pixel_error * error_scalars[error_coordinate]
+				image.set_pixel(col, row, pixel_dithered)
+	elif(technique == Main.DitheringTechnique.CONTINUOUS):
+		for row : int in range(image.get_height()):
+			for col : int in range(image.get_width()):
+				var pixel : Color = image.get_pixel(col, row)
+				var pixel_error : float = error[row][col]
+				var pixel_dithered : Color = Color()
+				var pixel_value_adjusted : int = int(float(pixel.r8) + (pixel_error * float(COLOR_CHANNEL_MAX8)))
+				var pixel_adjusted : Color = Color.from_rgba8(pixel_value_adjusted, pixel_value_adjusted, pixel_value_adjusted, pixel.a8)
+				var palette_index : int = _nearest_palette_index(pixel_adjusted)
+				pixel_dithered = palette[palette_index]
+				pixel_error = _color_distance(pixel_dithered, pixel_adjusted)
 				for error_coordinate : Vector2i in error_coordinates:
 					var new_row : int = row + error_coordinate.y
 					var new_col : int = col + error_coordinate.x
 					if(new_row < 0 or new_row >= error.size() or new_col < 0 or new_col >= error[0].size()):
 						continue
-					error[new_row][new_col] = pixel_error * error_scalars[error_coordinate]
-			pixel_dithered = Color(intensity, intensity, intensity, pixel.a)
-			image.set_pixel(col, row, pixel_dithered)
-	_strip_palette()
-	return
-
-# dithers image using intermediate, stucki algorithm
-func dither_intermediate_stucki() -> void:
-	if(image == null):
-		print("error: dither_intermediate_stucki called with no image")
-		return
-	elif(intensity_range.x > intensity_range.y):
-		print("error: dither_intermediate_stucki called with invalid intensity range - ", intensity_range)
-		return
-	elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
-		print("error: dither_intermediate_stucki called with invalid palette size - ", palette.size())
-		return
-	var step : float = (intensity_range.y - intensity_range.x) / float(palette.size() - 1)
-	var error : Array[Array] = []
-	## initialize error array
-	error.resize(image.get_height())
-	error.fill([])
-	for row : int in range(image.get_height()):
-		var error_row : Array[float] = []
-		error_row.resize(image.get_width())
-		error_row.fill(0.0)
-		error[row] = error_row
-	for row : int in range(image.get_height()):
-		for col : int in range(image.get_width()):
-			var pixel_error : float = error[row][col]
-			var pixel : Color = image.get_pixel(col, row)
-			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
-			var pixel_dithered : Color = Color()
-			# odd, or "intermediate" color indexes
-			if(int(intensity / step) % 2 == 1):
-				var pixel_value_adjusted : float = pixel.r + pixel_error
-				if(pixel_value_adjusted > intensity):
-					intensity += step
-				else:
-					intensity -= step
-				pixel_error = pixel_value_adjusted - intensity
-				for error_coordinate : Vector2i in ERROR_COORDINATES_STUCKI:
-					var new_row : int = row + error_coordinate.y
-					var new_col : int = col + error_coordinate.x
-					if(new_row < 0 or new_row >= error.size() or new_col >= error[0].size()):
-						continue
-					error[new_row][new_col] = pixel_error * ERROR_SCALARS_STUCKI[error_coordinate]
-			pixel_dithered = Color(intensity, intensity, intensity, pixel.a)
-			image.set_pixel(col, row, pixel_dithered)
-	_strip_palette()
-	return
-
-
-func dither_continuous_standard() -> void:
-	#if(image == null):
-		#print("error: dither_intermediate_standard called with no image")
-		#return
-	#elif(intensity_range.x > intensity_range.y):
-		#print("error: dither_intermediate_standard called with invalid intensity range - ", intensity_range)
-		#return
-	#elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
-		#print("error: dither_intermediate_standard called with invalid palette size - ", palette.size())
-		#return
-	#var step : float = (intensity_range.y - intensity_range.x) / float(palette.size() - 1.0)
-	#for row : int in range(image.get_height()):
-		#for col : int in range(image.get_width()):
-			#var pixel : Color = image.get_pixel(col, row)
-			#var pixel_dithered : Color = Color()
-			## creates a checkerboard dithering pattern by applying alternating pixels as the color index above or below the intermediate index
-			#if((row + col) % 2 == 0):
-				#pixel_dithered = snappedf(pixel.r, step) - 
-			#else:
-				#pixel_dithered = palette[index_dithering + 1]
-			#image.set_pixel(col, row, pixel_dithered)
+					error[new_row][new_col] += pixel_error * error_scalars[error_coordinate]
+				image.set_pixel(col, row, pixel_dithered)
+	
+	if(technique == Main.DitheringTechnique.INTERMEDIATE):
+		# intermediate algorithms create extra palette indexes, so remove them
+		_strip_palette()
 	return
 
 # swaps the current palette for a new palette
 func palette_swap(new_palette : Array[Color]) -> void:
+	# safety checks
 	if(image == null):
 		print("error: reduce_palette called with no image")
 		return
 	elif(palette.size() != new_palette.size()):
 		print("error: mismatched palette sizes - ", palette.size(), " ", new_palette.size())
 		return
+	
+	# process image
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
 			for index_palette : int in range(palette.size()):
 				if(_colors_grayscale_equal(pixel, palette[index_palette])):
 					image.set_pixel(col, row, new_palette[index_palette])
+	
 	# replace old palette with new one
 	for index_palette : int in range(palette.size()):
 		palette[index_palette] = new_palette[index_palette]
@@ -359,8 +341,6 @@ func palette_swap(new_palette : Array[Color]) -> void:
 
 # checks the equality of two colors
 func _colors_grayscale_equal(color_1 : Color, color_2 : Color) -> bool:
-	# TODO: is_equal_approx and snappedf necessary due to rounding bug?
-	#return is_equal_approx(snappedf(color_1.r8, COLOR_CHANNEL_RESOLUTION), snappedf(color_2.r8, COLOR_CHANNEL_RESOLUTION))
 	return abs(color_1.r8 - color_2.r8) < 2
 
 # removes odd indexes from the palette, called after applying intermediate dithering algorithm
@@ -373,19 +353,19 @@ func _strip_palette() -> void:
 	palette = palette_stripped
 	return
 
-# replaces the palette with the colors currently in the image
+# replaces the palette and intensity_range with the colors currently in the image
 func _update_palette_intensity_range() -> void:
 	palette.resize(0)
-	intensity_range = Vector2(1.0, 0.0)
+	intensity_range8 = Vector2(COLOR_CHANNEL_MAX8, COLOR_CHANNEL_MIN8)
 	for row : int in range(image.get_height()):
 		for col : int in range(image.get_width()):
 			var pixel : Color = image.get_pixel(col, row)
 			if(not pixel in palette):
 				palette.append(pixel)
-			if(pixel.r < intensity_range.x):
-				intensity_range.x = pixel.r
-			if(pixel.r > intensity_range.y):
-				intensity_range.y = pixel.r
+			if(pixel.r8 < intensity_range8.x):
+				intensity_range8.x = pixel.r8
+			if(pixel.r8 > intensity_range8.y):
+				intensity_range8.y = pixel.r8
 	for index_primary : int in range(0, palette.size() - 1):
 		for index_secondary : int in range(index_primary, palette.size()):
 			if(palette[index_secondary].r < palette[index_primary].r):
@@ -393,3 +373,66 @@ func _update_palette_intensity_range() -> void:
 				palette[index_primary] = palette[index_secondary]
 				palette[index_secondary] = temp
 	return
+
+# replaces the intensity_range with the colors currently in the image
+func _update_intensity_range() -> void:
+	intensity_range8 = Vector2(COLOR_CHANNEL_MAX8, COLOR_CHANNEL_MIN8)
+	for row : int in range(image.get_height()):
+		for col : int in range(image.get_width()):
+			var pixel : Color = image.get_pixel(col, row)
+			if(pixel.r8 < intensity_range8.x):
+				intensity_range8.x = pixel.r8
+			if(pixel.r8 > intensity_range8.y):
+				intensity_range8.y = pixel.r8
+	return
+
+# fill palette with possible colors based on num_colors and intensity range
+func _build_palette_from_intensity_range8(num_colors : int) -> void:
+	var step : int = int(float(intensity_range8.y - intensity_range8.x) / float(num_colors - 1))
+	palette.resize(num_colors)
+	var intensity_palette : int = intensity_range8.x
+	for index_palette : int in range(palette.size()):
+		var pixel_palette : Color = Color.from_rgba8(intensity_palette, intensity_palette, intensity_palette, COLOR_CHANNEL_MAX8)
+		palette[index_palette] = pixel_palette
+		intensity_palette += step
+	return
+
+# returns the index of the color in the palette that most closely resembles the given color
+func _nearest_palette_index(color : Color) -> int:
+	var index_nearest : int = -1
+	var distance : float = 1.0
+	for index_palette : int in range(palette.size()):
+		var current_color_distance : float = _color_distance(palette[index_palette], color)
+		if(abs(current_color_distance) < distance):
+			index_nearest = index_palette
+			distance = current_color_distance
+	return index_nearest
+
+# returns the index of the color in the palette that is even and most closely resembles the given color
+func _nearest_palette_index_even(color : Color) -> int:
+	var index_nearest : int = -1
+	var distance : float = 1.0
+	for index_palette : int in range(0, palette.size(), 2):
+		var current_color_distance : float = _color_distance(palette[index_palette], color)
+		if(abs(current_color_distance) < distance):
+			index_nearest = index_palette
+			distance = current_color_distance
+	return index_nearest
+
+# returns the euclidean distance between two colors, negative if the manhattan distance is negative (color2 - color1)
+func _color_distance(color1 : Color, color2 : Color) -> float:
+	var distance : float = 0
+	if(color1.r8 == color1.g8 and color1.r8 == color1.b8 and color2.r8 == color2.g8 and color2.r8 == color2.b8):
+		# colors are grayscale, so we can use less expensive distance algorithm
+		distance = color2.r - color1.r
+	else:
+		# colors are not grayscale, so we must use euclidean distance formula
+		distance = sqrt((color2.r - color1.r) * (color2.r - color1.r) +
+					(color2.g - color1.g) * (color2.g - color1.g) +
+					(color2.b - color1.b) * (color2.b - color1.b))
+		if((color2.r8 + color2.g8 + color2.b8) < (color1.r8 + color1.g8 + color1.b8)):
+			distance *= -1.0
+	return distance
+
+func _is_even(value : int) -> bool:
+	return value % 2 == 0
