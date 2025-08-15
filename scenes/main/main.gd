@@ -26,6 +26,7 @@ enum DitheringAlgorithm {
 	NONE,
 	STANDARD,
 	LINEAR,
+	FLOYD_STEINBERG,
 	STUCKI
 }
 
@@ -118,6 +119,10 @@ const PALETTE_NEO5 : Array[Color] = [
 	Color(0.239, 0.976, 0.918),
 	Color(0.937, 0.98, 0.98)
 ]
+
+const LITE_IMAGE_HEIGHT_LIMIT : int = 640
+const LITE_IMAGE_WIDTH_LIMIT : int = 640
+const FILE_NAME_WEB_DOWNLOAD : String = "dithyr.png"
 #endregion
 
 var image_processor : ImageProcessor = null
@@ -132,7 +137,9 @@ func _ready() -> void:
 	ui = %UI
 	
 	ui.file_open.connect(_on_file_open)
+	ui.file_open_web.connect(_on_file_open)
 	ui.file_save.connect(_on_file_save)
+	ui.file_save_web.connect(_on_file_save)
 	ui.process.connect(_on_process)
 	ui.grayscale_method_selected.connect(_on_grayscale_method_selected)
 	ui.dithering_technique_selected.connect(_on_dithering_technique_selected)
@@ -146,9 +153,30 @@ func _ready() -> void:
 	new_palette = ui.get_colors_new_palette()
 	return
 
+# used for loading an image from desktop
 func _load(file_path : String) -> Image:
-	var texture : Texture2D = load(file_path)
-	var image : Image = texture.get_image()
+	var image : Image = Image.new()
+	image.load(file_path)
+	if(OS.has_feature("lite")):
+		if(image.get_height() > LITE_IMAGE_HEIGHT_LIMIT or image.get_width() > LITE_IMAGE_WIDTH_LIMIT):
+			# TODO: add notification that lite version does not support images this size
+			print("Dithyr Lite supports images up to %s x %s in size. Please choose a smaller image or purchase the full version." % [str(LITE_IMAGE_WIDTH_LIMIT), str(LITE_IMAGE_HEIGHT_LIMIT)])
+			return null
+	return image
+
+# used for loading an image from the web
+func _load_from_data(type : String, base64_data : String) -> Image:
+	var raw_data : PackedByteArray = Marshalls.base64_to_raw(base64_data)
+	var image : Image = Image.new()
+	match type:
+		"image/png":
+			image.load_png_from_buffer(raw_data)
+		"image/jpeg":
+			image.load_jpg_from_buffer(raw_data)
+		"image/webp":
+			image.load_webp_from_buffer(raw_data)
+		_:
+			print("error: invalid image type - ", type)
 	return image
 
 func _save(image : Image, file_path : String) -> void:
@@ -157,14 +185,31 @@ func _save(image : Image, file_path : String) -> void:
 	return
 
 #region Callbacks
-func _on_file_open(file_name : String) -> void:
+func _on_file_open(file_name : String, file_type : String, base64_data : String) -> void:
 	image_processor.reset()
-	image_processor.image = _load(file_name)
+	if(OS.has_feature("pc")):
+		if(OS.has_feature("lite")):
+			if(not file_name.contains(".png")):
+				# TODO: add notification that lite version only supports .png files
+				print("Dithyr Lite supports .png files. Please choose a different image type or purchase the full version.")
+				return
+		image_processor.image = _load(file_name)
+	elif(OS.has_feature("web")):
+		image_processor.image = _load_from_data(file_type, base64_data)
 	ui.set_image(image_processor.image)
 	return
 
 func _on_file_save(file_name : String) -> void:
-	_save(image_processor.image, file_name)
+	if(OS.has_feature("pc")):
+		if(OS.has_feature("lite")):
+			if(not file_name.contains(".png")):
+				# TODO: add notification that lite version only supports .png files
+				print("Dithyr Lite supports .png files. Please choose a different image type or purchase the full version.")
+				return
+		_save(image_processor.image, file_name)
+	elif(OS.has_feature("web")):
+		var buffer : PackedByteArray = image_processor.image.save_png_to_buffer()
+		JavaScriptBridge.download_buffer(buffer, FILE_NAME_WEB_DOWNLOAD, "image/png")
 	return
 
 func _on_process() -> void:
@@ -206,8 +251,8 @@ func _on_process() -> void:
 					image_processor.dither_intermediate_standard()
 				DitheringAlgorithm.LINEAR:
 					image_processor.dither_intermediate_linear()
-				DitheringAlgorithm.STUCKI:
-					image_processor.dither_intermediate_stucki()
+				DitheringAlgorithm.FLOYD_STEINBERG, DitheringAlgorithm.STUCKI:
+					image_processor.dither_intermediate(dithering_algorithm)
 				_:
 					print("error: invalid dithering algorithm - ", dithering_algorithm)
 			ui.set_image(image_processor.image)

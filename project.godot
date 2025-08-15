@@ -11,8 +11,10 @@ config_version=5
 [application]
 
 config/name="image_color_reducer"
+config/version="1.0.0"
 run/main_scene="uid://c52vkmua7n40q"
 config/features=PackedStringArray("4.4", "GL Compatibility")
+config/icon="uid://jsnyefl1jxts"
 
 [debug]
 

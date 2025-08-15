@@ -35,36 +35,59 @@ const GRAYSCALE_GB_CHANNEL : Array[float] = [0.0, 1.0, 1.0]
 const PALETTE_SIZE_MIN : int = 2
 const PALETTE_SIZE_MAX : int = 12
 
-const ERROR_COORDINATES_STUCKI : Array[Vector2i] = [
-	Vector2i(1, 0),
-	Vector2i(2, 0),
-	Vector2i(-2, 1),
-	Vector2i(-1, 1),
-	Vector2i(0, 1),
-	Vector2i(1, 1),
-	Vector2i(2, 1),
-	Vector2i(-2, 2),
-	Vector2i(-1, 2),
-	Vector2i(0, 2),
-	Vector2i(1, 2),
-	Vector2i(2, 2)
+# shorthand for all of the vectors denoting relative position in the error matrix
+const VR : Vector2i = Vector2i.RIGHT
+const VRR : Vector2i = Vector2i.RIGHT + Vector2i.RIGHT
+const VLLD : Vector2i = Vector2i.LEFT + Vector2i.LEFT + Vector2i.DOWN
+const VLD : Vector2i = Vector2i.LEFT + Vector2i.DOWN
+const VD : Vector2i = Vector2i.DOWN
+const VRD : Vector2i = Vector2i.RIGHT + Vector2i.DOWN
+const VRRD : Vector2i = Vector2i.RIGHT + Vector2i.RIGHT + Vector2i.DOWN
+const VLLDD : Vector2i = Vector2i.LEFT + Vector2i.LEFT + Vector2i.DOWN + Vector2i.DOWN
+const VLDD : Vector2i = Vector2i.LEFT + Vector2i.DOWN + Vector2i.DOWN
+const VDD : Vector2i = Vector2i.DOWN + Vector2i.DOWN
+const VRDD : Vector2i = Vector2i.RIGHT + Vector2i.DOWN + Vector2i.DOWN
+const VRRDD : Vector2i = Vector2i.RIGHT + Vector2i.RIGHT + Vector2i.DOWN + Vector2i.DOWN
+
+const ERROR_COORDINATES_LINEAR : Array[Vector2i] = [
+	VR
 ]
 
-const ERROR_DIVISOR_STUCKI : float = 42.0
+const ERROR_SCALARS_LINEAR : Dictionary[Vector2i, float] = {
+	VR : 1.0
+}
 
-const ERROR_MAGNITUDE_STUCKI : Dictionary[Vector2i, float] = {
-	Vector2i(1, 0) : 8.0,
-	Vector2i(2, 0) : 4.0,
-	Vector2i(-2, 1) : 2.0,
-	Vector2i(-1, 1) : 4.0,
-	Vector2i(0, 1) : 8.0,
-	Vector2i(1, 1) : 4.0,
-	Vector2i(2, 1) : 2.0,
-	Vector2i(-2, 2) : 1.0,
-	Vector2i(-1, 2) : 2.0,
-	Vector2i(0, 2) : 4.0,
-	Vector2i(1, 2) : 2.0,
-	Vector2i(2, 2) : 1.0
+const ERROR_COORDINATES_FLOYD_STEINBERG : Array[Vector2i] = [
+	VR,
+	VLD, VD, VRD
+]
+
+const ERROR_SCALARS_FLOYD_STEINBERG : Dictionary[Vector2i, float] = {
+	VR : 7.0 / 16.0,
+	VLD : 3.0 / 16.0,
+	VD : 5.0 / 16.0,
+	VRD : 1.0 / 16.0
+}
+
+const ERROR_COORDINATES_STUCKI : Array[Vector2i] = [
+	VR, VRR,
+	VLLD, VLD, VD, VRD, VRRD,
+	VLLDD, VLDD, VDD, VRDD, VRRDD
+]
+
+const ERROR_SCALARS_STUCKI : Dictionary[Vector2i, float] = {
+	VR : 8.0 / 42.0,
+	VRR : 4.0 / 42.0,
+	VLLD : 2.0 / 42.0,
+	VLD : 4.0 / 42.0,
+	VD : 8.0 / 42.0,
+	VRD : 4.0 / 42.0,
+	VRRD : 2.0 / 42.0,
+	VLLDD : 1.0 / 42.0,
+	VLDD : 2.0 / 42.0,
+	VDD : 4.0 / 42.0,
+	VRDD : 2.0 / 42.0,
+	VRRDD : 1.0 / 42.0
 }
 #endregion
 
@@ -187,6 +210,64 @@ func dither_intermediate_linear() -> void:
 	_strip_palette()
 	return
 
+func dither_intermediate(algorithm : Main.DitheringAlgorithm) -> void:
+	if(image == null):
+		print("error: dither_intermediate called with no image")
+		return
+	elif(intensity_range.x > intensity_range.y):
+		print("error: dither_intermediate called with invalid intensity range - ", intensity_range)
+		return
+	elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
+		print("error: dither_intermediate called with invalid palette size - ", palette.size())
+		return
+	var step : float = (intensity_range.y - intensity_range.x) / float(palette.size() - 1)
+	var error : Array[Array] = []
+	var error_coordinates : Array[Vector2i] = []
+	var error_scalars : Dictionary[Vector2i, float] = {}
+	## initialize error array
+	error.resize(image.get_height())
+	error.fill([])
+	for row : int in range(image.get_height()):
+		var error_row : Array[float] = []
+		error_row.resize(image.get_width())
+		error_row.fill(0.0)
+		error[row] = error_row
+	# set error coordinates and scalars
+	match algorithm:
+		Main.DitheringAlgorithm.LINEAR:
+			error_coordinates = ERROR_COORDINATES_LINEAR
+			error_scalars = ERROR_SCALARS_LINEAR
+		Main.DitheringAlgorithm.FLOYD_STEINBERG:
+			error_coordinates = ERROR_COORDINATES_FLOYD_STEINBERG
+			error_scalars = ERROR_SCALARS_FLOYD_STEINBERG
+		Main.DitheringAlgorithm.STUCKI:
+			error_coordinates = ERROR_COORDINATES_STUCKI
+			error_scalars = ERROR_SCALARS_STUCKI
+	for row : int in range(image.get_height()):
+		for col : int in range(image.get_width()):
+			var pixel_error : float = error[row][col]
+			var pixel : Color = image.get_pixel(col, row)
+			var intensity : float = snappedf(pixel.r, step) + intensity_range.x
+			var pixel_dithered : Color = Color()
+			# odd, or "intermediate" color indexes
+			if(int(intensity / step) % 2 == 1):
+				var pixel_value_adjusted : float = pixel.r + pixel_error
+				if(pixel_value_adjusted > intensity):
+					intensity += step
+				else:
+					intensity -= step
+				pixel_error = pixel_value_adjusted - intensity
+				for error_coordinate : Vector2i in error_coordinates:
+					var new_row : int = row + error_coordinate.y
+					var new_col : int = col + error_coordinate.x
+					if(new_row < 0 or new_row >= error.size() or new_col < 0 or new_col >= error[0].size()):
+						continue
+					error[new_row][new_col] = pixel_error * error_scalars[error_coordinate]
+			pixel_dithered = Color(intensity, intensity, intensity, pixel.a)
+			image.set_pixel(col, row, pixel_dithered)
+	_strip_palette()
+	return
+
 # dithers image using intermediate, stucki algorithm
 func dither_intermediate_stucki() -> void:
 	if(image == null):
@@ -227,10 +308,34 @@ func dither_intermediate_stucki() -> void:
 					var new_col : int = col + error_coordinate.x
 					if(new_row < 0 or new_row >= error.size() or new_col >= error[0].size()):
 						continue
-					error[new_row][new_col] = pixel_error * ERROR_MAGNITUDE_STUCKI[error_coordinate] / ERROR_DIVISOR_STUCKI
+					error[new_row][new_col] = pixel_error * ERROR_SCALARS_STUCKI[error_coordinate]
 			pixel_dithered = Color(intensity, intensity, intensity, pixel.a)
 			image.set_pixel(col, row, pixel_dithered)
 	_strip_palette()
+	return
+
+
+func dither_continuous_standard() -> void:
+	#if(image == null):
+		#print("error: dither_intermediate_standard called with no image")
+		#return
+	#elif(intensity_range.x > intensity_range.y):
+		#print("error: dither_intermediate_standard called with invalid intensity range - ", intensity_range)
+		#return
+	#elif(palette.size() < PALETTE_SIZE_MIN or palette.size() > (PALETTE_SIZE_MAX * 2) + 1 or palette.size() % 2 != 1):
+		#print("error: dither_intermediate_standard called with invalid palette size - ", palette.size())
+		#return
+	#var step : float = (intensity_range.y - intensity_range.x) / float(palette.size() - 1.0)
+	#for row : int in range(image.get_height()):
+		#for col : int in range(image.get_width()):
+			#var pixel : Color = image.get_pixel(col, row)
+			#var pixel_dithered : Color = Color()
+			## creates a checkerboard dithering pattern by applying alternating pixels as the color index above or below the intermediate index
+			#if((row + col) % 2 == 0):
+				#pixel_dithered = snappedf(pixel.r, step) - 
+			#else:
+				#pixel_dithered = palette[index_dithering + 1]
+			#image.set_pixel(col, row, pixel_dithered)
 	return
 
 # swaps the current palette for a new palette

@@ -352,15 +352,17 @@ layout_mode = 2
 size_flags_horizontal = 11
 theme = ExtResource("2_0dwhk")
 selected = 1
-item_count = 4
+item_count = 5
 popup/item_0/text = "None"
 popup/item_0/id = 0
 popup/item_1/text = "Standard"
 popup/item_1/id = 1
 popup/item_2/text = "Linear"
 popup/item_2/id = 2
-popup/item_3/text = "Stucki"
+popup/item_3/text = "Floyd-Steinberg"
 popup/item_3/id = 3
+popup/item_4/text = "Stucki"
+popup/item_4/id = 4
 
 [node name="ButtonOptionsOK" type="Button" parent="PanelContainerOptions/MarginContainerOptions/VBoxContainerOptions"]
 custom_minimum_size = Vector2(120, 0)
@@ -454,6 +456,7 @@ title = "Open a File"
 initial_position = 4
 ok_button_text = "Open"
 file_mode = 0
+access = 2
 filters = PackedStringArray("*.png")
 use_native_dialog = true
 
@@ -461,6 +464,7 @@ use_native_dialog = true
 unique_name_in_owner = true
 auto_translate_mode = 1
 initial_position = 4
+access = 2
 filters = PackedStringArray("*.png")
 use_native_dialog = true
 

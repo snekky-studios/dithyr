@@ -2,7 +2,9 @@ class_name UI
 extends Control
 
 signal file_open(file_path : String)
+signal file_open_web(file_name : String, file_type : String, base64_data : String)
 signal file_save(file_path : String)
+signal file_save_web
 signal process
 signal grayscale_method_selected(value : Main.GrayscaleMethod)
 signal dithering_technique_selected(value : Main.DitheringTechnique)
@@ -13,6 +15,9 @@ signal apply_new_palette
 
 #region Constants
 const COLOR_SELECTOR : PackedScene = preload("res://scenes/ui/color_selector/color_selector.tscn")
+
+const FILE_TYPES_SUPPORTED_LITE : String = ".png"
+const FILE_TYPES_SUPPORTED_FULL : String = ".png, .jpg, .webp"
 
 const INDEX_GRAYSCALE_METHOD_STANDARD : int = 0
 const INDEX_GRAYSCALE_METHOD_BT709 : int = 1
@@ -33,7 +38,8 @@ const INDEX_DITHERING_TECHNIQUE_CONTINUOUS : int = 3
 const INDEX_DITHERING_ALGORITHM_NONE : int = 0
 const INDEX_DITHERING_ALGORITHM_STANDARD : int = 1
 const INDEX_DITHERING_ALGORITHM_LINEAR : int = 2
-const INDEX_DITHERING_ALGORITHM_STUCKI : int = 3
+const INDEX_DITHERING_ALGORITHM_FLOYD_STEINBERG : int = 3
+const INDEX_DITHERING_ALGORITHM_STUCKI : int = 4
 
 const INDEX_PALETTE_SLSO8 : int = 0
 const INDEX_PALETTE_1BIT_MONITOR_GLOW : int = 1
@@ -48,6 +54,8 @@ const INDEX_PALETTE_CANCEL : int = 8
 
 var color_selectors_new_palette : Array[ColorSelector] = []
 var color_selectors_current_palette : Array[ColorSelector] = []
+
+var file_access_web : FileAccessWeb = null
 
 #region Node Declarations
 var vbox_container_new_palette : VBoxContainer = null
@@ -82,10 +90,22 @@ func _ready() -> void:
 	file_dialog_open = %FileDialogOpen
 	file_dialog_save = %FileDialogSave
 	
+	var file_extension_filters : PackedStringArray = ["*.png"]
+	if(OS.has_feature("full")):
+		file_extension_filters.append("*.jpg")
+		file_extension_filters.append("*.jpeg")
+		file_extension_filters.append("*.webp")
+	file_dialog_open.filters = file_extension_filters
+	file_dialog_save.filters = file_extension_filters
+	
 	menu_button_load.get_popup().id_pressed.connect(_on_popup_menu_load_id_pressed)
 	
 	for index_color_selector_new_palette : int in range(ImageProcessor.PALETTE_SIZE_MIN):
 		add_color_selector_new_palette()
+	
+	if(OS.has_feature("web")):
+		file_access_web = FileAccessWeb.new()
+		file_access_web.loaded.connect(_on_file_access_web_loaded)
 	return
 
 func add_color_selector_new_palette(color : Color = Color()) -> void:
@@ -185,16 +205,26 @@ func _on_color_selector_color_changed() -> void:
 	return
 
 func _on_file_dialog_open_file_selected(path: String) -> void:
-	file_open.emit(path)
+	file_open.emit(path, "", "")
 	return
 
 func _on_file_dialog_save_file_selected(path: String) -> void:
 	file_save.emit(path)
 	return
 
+func _on_file_access_web_loaded(file_name : String, file_type: String, base64_data: String) -> void:
+	file_open_web.emit(file_name, file_type, base64_data)
+	return
+
 func _on_button_open_pressed() -> void:
 	close_popups()
-	file_dialog_open.popup_centered_ratio()
+	if(OS.has_feature("pc")):
+		file_dialog_open.popup_centered_ratio()
+	elif(OS.has_feature("web")):
+		if(OS.has_feature("full")):
+			file_access_web.open(FILE_TYPES_SUPPORTED_FULL)
+		elif(OS.has_feature("lite")):
+			file_access_web.open(FILE_TYPES_SUPPORTED_LITE)
 	return
 
 func _on_button_options_pressed() -> void:
@@ -209,7 +239,10 @@ func _on_button_process_pressed() -> void:
 
 func _on_button_save_pressed() -> void:
 	close_popups()
-	file_dialog_save.popup_centered_ratio()
+	if(OS.has_feature("pc")):
+		file_dialog_save.popup_centered_ratio()
+	elif(OS.has_feature("web")):
+		file_save_web.emit("")
 	return
 
 func _on_button_help_pressed() -> void:
@@ -255,21 +288,35 @@ func _on_option_button_dithering_technique_item_selected(index: int) -> void:
 			option_button_dithering_algorithm.select(INDEX_DITHERING_ALGORITHM_NONE)
 			dithering_technique_selected.emit(Main.DitheringTechnique.REDUCE_ONLY)
 		INDEX_DITHERING_TECHNIQUE_INTERMEDIATE:
+			if(option_button_dithering_algorithm.selected == INDEX_DITHERING_ALGORITHM_NONE):
+				option_button_dithering_algorithm.select(INDEX_DITHERING_ALGORITHM_STANDARD)
 			dithering_technique_selected.emit(Main.DitheringTechnique.INTERMEDIATE)
 		INDEX_DITHERING_TECHNIQUE_CONTINUOUS:
+			if(option_button_dithering_algorithm.selected == INDEX_DITHERING_ALGORITHM_NONE or
+					option_button_dithering_algorithm.selected == INDEX_DITHERING_ALGORITHM_STANDARD):
+				option_button_dithering_algorithm.select(INDEX_DITHERING_ALGORITHM_LINEAR)
 			dithering_technique_selected.emit(Main.DitheringTechnique.CONTINUOUS)
 	return
 
 func _on_option_button_dithering_algorithm_item_selected(index: int) -> void:
 	match index:
 		INDEX_DITHERING_ALGORITHM_NONE:
-			option_button_dithering_technique.select(INDEX_DITHERING_ALGORITHM_NONE)
+			option_button_dithering_technique.select(INDEX_DITHERING_TECHNIQUE_NONE)
 			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.NONE)
 		INDEX_DITHERING_ALGORITHM_STANDARD:
+			option_button_dithering_technique.select(INDEX_DITHERING_TECHNIQUE_INTERMEDIATE)
 			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.STANDARD)
 		INDEX_DITHERING_ALGORITHM_LINEAR:
+			if(option_button_dithering_technique.selected == INDEX_DITHERING_TECHNIQUE_NONE):
+				option_button_dithering_technique.select(INDEX_DITHERING_TECHNIQUE_INTERMEDIATE)
 			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.LINEAR)
+		INDEX_DITHERING_ALGORITHM_FLOYD_STEINBERG:
+			if(option_button_dithering_technique.selected == INDEX_DITHERING_TECHNIQUE_NONE):
+				option_button_dithering_technique.select(INDEX_DITHERING_TECHNIQUE_INTERMEDIATE)
+			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.FLOYD_STEINBERG)
 		INDEX_DITHERING_ALGORITHM_STUCKI:
+			if(option_button_dithering_technique.selected == INDEX_DITHERING_TECHNIQUE_NONE):
+				option_button_dithering_technique.select(INDEX_DITHERING_TECHNIQUE_INTERMEDIATE)
 			dithering_algorithm_selected.emit(Main.DitheringAlgorithm.STUCKI)
 	return
 
